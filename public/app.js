@@ -7,8 +7,18 @@ const activeSession = document.querySelector("#active-session");
 const sessionDetail = document.querySelector("#session-detail");
 const closeButton = document.querySelector("#close-session");
 const previewSize = document.querySelector(".preview-size");
+const viewer = document.querySelector("#browser-viewer");
+const browserFrame = document.querySelector("#browser-frame");
+const viewerAddress = document.querySelector("#viewer-address");
+const viewerStatus = document.querySelector("#viewer-status");
+const landscapeToggle = document.querySelector("#landscape-toggle");
+const viewerBack = document.querySelector("#viewer-back");
+const viewerNewTab = document.querySelector("#viewer-new-tab");
 
 let currentSessionId = null;
+let currentLiveViewUrl = null;
+let landscape = false;
+let isOpening = false;
 
 function showMessage(text) {
   message.textContent = text;
@@ -16,8 +26,34 @@ function showMessage(text) {
 }
 
 function setBusy(busy) {
+  isOpening = busy;
   openButton.disabled = busy;
   openButton.innerHTML = busy ? "Opening…" : 'Open <span aria-hidden="true">↗</span>';
+}
+
+function setLandscape(enabled) {
+  landscape = enabled;
+  viewer.classList.toggle("is-landscape", enabled);
+  landscapeToggle.setAttribute("aria-pressed", String(enabled));
+  landscapeToggle.innerHTML = enabled
+    ? '<span aria-hidden="true">↺</span> Portrait'
+    : '<span aria-hidden="true">↻</span> Landscape';
+}
+
+function showViewer(data) {
+  currentLiveViewUrl = data.liveViewUrl;
+  browserFrame.src = data.liveViewUrl;
+  viewerAddress.textContent = data.targetUrl || urlInput.value.trim();
+  viewerStatus.textContent = "Remote browser started. If the view does not load here, use ↗ to open it separately.";
+  viewer.hidden = false;
+  document.body.classList.add("viewer-open");
+  setLandscape(false);
+}
+
+function hideViewer() {
+  viewer.hidden = true;
+  document.body.classList.remove("viewer-open");
+  setLandscape(false);
 }
 
 viewportSelect.addEventListener("change", () => {
@@ -26,19 +62,11 @@ viewportSelect.addEventListener("change", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (isOpening) return;
   showMessage("");
-  activeSession.hidden = true;
 
   const rawUrl = urlInput.value.trim();
   if (!rawUrl) return;
-
-  // Open synchronously from the user gesture so mobile browsers are less likely to block the tab.
-  const viewTab = window.open("about:blank", "_blank");
-  if (viewTab) {
-    viewTab.document.title = "Starting Portify…";
-    viewTab.document.body.style.cssText = "margin:0;background:#f6f5f1;color:#273020;font:16px system-ui;display:grid;place-items:center;min-height:100vh";
-    viewTab.document.body.textContent = "Starting your remote desktop browser…";
-  }
 
   const [width, height] = viewportSelect.value.split("x").map(Number);
   setBusy(true);
@@ -54,28 +82,38 @@ form.addEventListener("submit", async (event) => {
     if (!response.ok) throw new Error(data.error || "Could not start the remote browser.");
 
     currentSessionId = data.sessionId;
-    if (viewTab && !viewTab.closed) {
-      viewTab.location.replace(data.liveViewUrl);
-    } else {
-      window.location.assign(data.liveViewUrl);
-      return;
-    }
-
-    sessionDetail.textContent = `${data.viewport.width} × ${data.viewport.height} · Live View opened in a new tab.`;
+    sessionDetail.textContent = `${data.viewport.width} × ${data.viewport.height} · Remote browser ready.`;
     activeSession.hidden = false;
-    showMessage("");
+    showViewer(data);
   } catch (error) {
-    if (viewTab && !viewTab.closed) viewTab.close();
     showMessage(error instanceof Error ? error.message : "Something went wrong. Please try again.");
   } finally {
     setBusy(false);
   }
 });
 
-closeButton.addEventListener("click", async () => {
-  if (!currentSessionId) return;
+landscapeToggle.addEventListener("click", () => setLandscape(!landscape));
+
+viewerBack.addEventListener("click", hideViewer);
+
+viewerNewTab.addEventListener("click", () => {
+  if (!currentLiveViewUrl) return;
+  window.open(currentLiveViewUrl, "_blank", "noopener,noreferrer");
+});
+
+browserFrame.addEventListener("load", () => {
+  viewerStatus.textContent = "Viewer loaded. Tap Landscape for a wider working area.";
+});
+
+async function closeRemoteSession() {
+  if (!currentSessionId) {
+    hideViewer();
+    return;
+  }
+
   closeButton.disabled = true;
   closeButton.textContent = "Closing…";
+  viewerStatus.textContent = "Closing remote browser…";
 
   try {
     const response = await fetch(`/api/session/${encodeURIComponent(currentSessionId)}`, {
@@ -85,12 +123,27 @@ closeButton.addEventListener("click", async () => {
     if (!response.ok) throw new Error(data.error || "Could not close the remote session.");
 
     currentSessionId = null;
+    currentLiveViewUrl = null;
+    browserFrame.removeAttribute("src");
     activeSession.hidden = true;
+    hideViewer();
     showMessage("Remote browser session closed.");
   } catch (error) {
     showMessage(error instanceof Error ? error.message : "Could not close the session.");
+    viewerStatus.textContent = "Could not close the remote browser. Please try again.";
   } finally {
     closeButton.disabled = false;
     closeButton.textContent = "Close remote session";
   }
+}
+
+closeButton.addEventListener("click", closeRemoteSession);
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !viewer.hidden) hideViewer();
+});
+
+window.addEventListener("pagehide", () => {
+  // The server-side session has its own ten-minute keep-alive. Explicitly close
+  // it with the in-viewer control when you are done.
 });
