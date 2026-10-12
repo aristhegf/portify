@@ -47,3 +47,35 @@ footer{max-width:690px;margin:25px auto 0;padding:20px 0 30px;border-top:1px sol
 footer a{color:#555f4c;text-decoration:none;font-weight:650}footer a:hover{text-decoration:underline}.footer-dot{padding:0 3px}
 @media(min-width:760px){.hero{margin-top:86px}.preview-content{padding:28px 32px}.mini-page{padding:20px 22px}.mini-heading{height:10px}.mini-lines{margin:13px 0 16px}.mini-card-row div{height:43px}}
 @media(max-width:520px){.shell{width:min(100% - 30px,1050px)}.topbar{height:65px}.edition{font-size:8px;letter-spacing:1px}.hero{margin-top:53px}.eyebrow{font-size:11px;margin-bottom:18px}h1{letter-spacing:-2.7px}h1 span{letter-spacing:-2.2px}.intro{font-size:14px;margin:18px 0 25px}.open-form{padding:15px;border-radius:13px}.url-field{gap:7px;padding-left:10px}.url-field input{font-size:14px}.url-field button{padding:12px 12px}.settings select{font-size:10px;max-width:59%;padding:0 6px}.preview{margin-top:30px}.preview-content{grid-template-columns:minmax(0,1fr);gap:15px;padding:15px}.preview-note{white-space:normal;font-size:10px}.mini-page{padding:14px}.active-session{align-items:flex-start;flex-direction:column}.secondary-button{width:100%}footer{font-size:9px}}
+
+
+/* In-app remote browser viewer */
+body.viewer-open{overflow:hidden}
+.browser-viewer{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;background:#171a17;color:#f7f8f4;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+.browser-viewer[hidden]{display:none}
+.viewer-toolbar{position:relative;z-index:3;display:flex;align-items:center;gap:10px;min-height:58px;padding:8px 12px;background:#20251f;border-bottom:1px solid #343a32}
+.viewer-icon-button{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid #42483f;border-radius:10px;background:#2b302a;color:#f6f7f3;font-size:21px;cursor:pointer}
+.viewer-title{display:flex;flex:1;min-width:0;flex-direction:column;gap:3px}
+.viewer-title strong{font-size:13px;letter-spacing:-.2px}
+.viewer-title span{overflow:hidden;color:#b5bcb0;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.viewer-action{display:flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:0 12px;border:1px solid #c8f169;border-radius:10px;background:#c8f169;color:#24321a;font-size:12px;font-weight:750;white-space:nowrap;cursor:pointer}
+.viewer-action span{font-size:18px;line-height:1}
+.viewer-stage{position:relative;flex:1;min-height:0;overflow:hidden;background:#111}
+#browser-frame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#fff}
+.viewer-footer{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:34px;padding:7px 12px;background:#20251f;color:#b5bcb0;font-size:10px;line-height:1.35}
+.viewer-footer span:last-child{text-align:right}
+.browser-viewer.is-landscape .viewer-stage{overflow:hidden}
+.browser-viewer.is-landscape #browser-frame{inset:auto;top:50%;left:50%;width:100dvh;height:100vw;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center}
+.browser-viewer.is-landscape .viewer-footer span:last-child{display:none}
+@media(min-width:700px){
+  .viewer-toolbar{padding-left:18px;padding-right:18px}
+  .viewer-footer{padding-left:18px;padding-right:18px}
+}
+@media(max-width:420px){
+  .viewer-toolbar{gap:6px;padding-left:8px;padding-right:8px}
+  .viewer-title strong{font-size:12px}
+  .viewer-title span{font-size:10px}
+  .viewer-action{gap:4px;padding:0 9px;font-size:11px}
+  .viewer-icon-button{flex-basis:34px;width:34px;height:36px}
+  .viewer-footer{font-size:9px}
+}
