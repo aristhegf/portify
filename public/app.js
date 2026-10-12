@@ -102,7 +102,7 @@ viewerNewTab.addEventListener("click", () => {
 });
 
 browserFrame.addEventListener("load", () => {
-  viewerStatus.textContent = "Viewer loaded. Tap Landscape for a wider working area.";
+  viewerStatus.textContent = "Viewer frame loaded. If it looks blank, tap ↗ to open it separately."
 });
 
 async function closeRemoteSession() {
