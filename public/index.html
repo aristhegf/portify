@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6f5f1">
+  <meta name="description" content="Open a real desktop browser viewport from your phone.">
+  <title>Portify — Desktop browsing, from your phone</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="wordmark" href="/" aria-label="Portify home"><span class="mark">p</span> portify</a>
+      <span class="edition">PERSONAL PREVIEW</span>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow"><span class="status-dot"></span> A desktop browser in your pocket</p>
+      <h1 id="page-title">The desktop web.<br><span>On your phone.</span></h1>
+      <p class="intro">Open a site at a real desktop viewport. Not a squeezed-down mobile page.</p>
+
+      <form id="open-form" class="open-form">
+        <label for="site-url">Website address</label>
+        <div class="url-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
+          <input id="site-url" name="url" type="text" inputmode="url" autocomplete="url" autocapitalize="none" spellcheck="false" placeholder="example.com" required>
+          <button id="open-button" type="submit">Open <span aria-hidden="true">↗</span></button>
+        </div>
+        <p class="hint">No account. No installation. Just enter a URL.</p>
+
+        <div class="settings">
+          <div class="setting-copy">
+            <span class="setting-title">Desktop viewport</span>
+            <span class="setting-subtitle">The size websites render at</span>
+          </div>
+          <select id="viewport" name="viewport" aria-label="Desktop viewport size">
+            <option value="1366x768">1366 × 768 · Laptop</option>
+            <option value="1280x800">1280 × 800 · Compact</option>
+            <option value="1440x900">1440 × 900 · Desktop</option>
+            <option value="1920x1080">1920 × 1080 · Full HD</option>
+          </select>
+        </div>
+      </form>
+
+      <div id="message" class="message" role="status" aria-live="polite" hidden></div>
+
+      <section id="active-session" class="active-session" hidden>
+        <div class="session-indicator"><span class="status-dot"></span><div><strong>Browser opened</strong><p id="session-detail">Your desktop view is in a new tab.</p></div></div>
+        <button id="close-session" class="secondary-button" type="button">Close remote session</button>
+      </section>
+    </section>
+
+    <section class="preview" aria-label="Desktop viewport preview">
+      <div class="preview-bar"><div class="window-dots"><i></i><i></i><i></i></div><span class="preview-label">DESKTOP VIEWPORT</span><span class="preview-size">1366 × 768</span></div>
+      <div class="preview-content">
+        <div class="mini-browser">
+          <div class="mini-address"><span class="lock">⌑</span> example.com</div>
+          <div class="mini-page">
+            <div class="mini-heading"></div><div class="mini-heading short"></div>
+            <div class="mini-lines"><i></i><i></i><i></i></div>
+            <div class="mini-card-row"><div></div><div></div><div></div></div>
+          </div>
+        </div>
+        <div class="preview-note"><span class="preview-icon">↗</span><span>Real Chromium, running remotely.<br><strong>Your phone is the window.</strong></span></div>
+      </div>
+    </section>
+
+    <footer><span>Portify <span class="footer-dot">·</span> Open source, built for the community.</span><a href="https://github.com/aristhegf/portify" target="_blank" rel="noreferrer">View source ↗</a></footer>
+  </main>
+</body>
+</html>
