@@ -174,7 +174,25 @@ async function createSession(request: Request, env: Env): Promise<Response> {
       try { await env.BROWSER.closeSession(sessionId); } catch { /* best-effort cleanup */ }
     }
     const message = error instanceof Error ? error.message : "Unable to start the remote browser.";
-    return json({ error: message }, 502);
+    const errorDetails = error && typeof error === "object"
+      ? {
+          name: "name" in error ? String(error.name) : "UnknownError",
+          status: "status" in error ? Number(error.status) || undefined : undefined,
+          retryAfter: "retryAfter" in error ? String(error.retryAfter) : undefined,
+          stack: error instanceof Error ? error.stack : undefined,
+        }
+      : {};
+    console.error("[portify] Browser session creation failed", {
+      message,
+      ...errorDetails,
+      sessionAcquired: Boolean(sessionId),
+    });
+    const upstreamRateLimited = /status\s*[=:]\s*429|too many requests|rate limit exceeded/i.test(message)
+      || errorDetails.status === 429;
+    return json(
+      { error: message, retryAfter: errorDetails.retryAfter },
+      upstreamRateLimited ? 429 : 502,
+    );
   } finally {
     try { socket?.close(); } catch { /* best-effort cleanup */ }
   }
