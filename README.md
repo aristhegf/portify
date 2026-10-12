@@ -4,7 +4,7 @@ Portify is a free, open-source web tool for viewing and interacting with website
 
 ## Current status
 
-Early prototype. The first milestone is validating remote desktop browsing with Cloudflare Browser Run's interactive Live View.
+Early prototype using Cloudflare Browser Run. The home page starts a remote Chromium session and opens Cloudflare Live View inside Portify's own viewer. The viewer has an in-page landscape control that rotates the viewing surface for a wider working area without requiring the user to rotate the physical phone. An Open-in-new-tab fallback is available because some pages or hosted viewers may refuse to render inside an iframe.
 
 ## Stack
 
@@ -33,7 +33,8 @@ npm run deploy
 ## Current limitations
 
 - Browser Run's free allowance is limited; this is a personal-use prototype.
-- Live View opens in a separate browser tab, because it is hosted by Cloudflare.
+- The landscape control rotates the viewer in the page; it cannot force iOS to change the phone's physical orientation.
+- Live View is Cloudflare's hosted interface embedded in an iframe, not a custom-built streaming client. If embedding is blocked, use the open-in-new-tab control.
 - Before public launch, add abuse prevention, per-session ownership, rate limits, stronger URL/destination restrictions, and billing/usage controls.
 - This project is not yet ready for untrusted public traffic.
 
