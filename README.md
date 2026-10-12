@@ -6,6 +6,8 @@ Portify is a free, open-source web tool for viewing and interacting with website
 
 Early prototype using Cloudflare Browser Run. The home page starts a remote Chromium session and opens Cloudflare Live View inside Portify's own viewer. The viewer has an in-page landscape control that rotates the viewing surface for a wider working area without requiring the user to rotate the physical phone. An Open-in-new-tab fallback is available because some pages or hosted viewers may refuse to render inside an iframe.
 
+Production deploys are configured to run from the `main` branch through Cloudflare Workers Builds when the GitHub connection is active.
+
 ## Stack
 
 - TypeScript and Cloudflare Workers
