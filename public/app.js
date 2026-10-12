@@ -19,6 +19,7 @@ let currentSessionId = null;
 let currentLiveViewUrl = null;
 let landscape = false;
 let isOpening = false;
+let isClosing = false;
 
 function showMessage(text) {
   message.textContent = text;
@@ -44,7 +45,7 @@ function showViewer(data) {
   currentLiveViewUrl = data.liveViewUrl;
   browserFrame.src = data.liveViewUrl;
   viewerAddress.textContent = data.targetUrl || urlInput.value.trim();
-  viewerStatus.textContent = "Remote browser started. If the view does not load here, use ↗ to open it separately.";
+  viewerStatus.textContent = "Remote browser started. Close the session when you are done to release browser time.";
   viewer.hidden = false;
   document.body.classList.add("viewer-open");
   setLandscape(false);
@@ -54,6 +55,7 @@ function hideViewer() {
   viewer.hidden = true;
   document.body.classList.remove("viewer-open");
   setLandscape(false);
+  browserFrame.removeAttribute("src");
 }
 
 viewportSelect.addEventListener("change", () => {
@@ -62,11 +64,20 @@ viewportSelect.addEventListener("change", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (isOpening) return;
+  if (isOpening || isClosing) return;
   showMessage("");
 
   const rawUrl = urlInput.value.trim();
   if (!rawUrl) return;
+
+  // Close any older session before starting a new browser.
+  if (currentSessionId) {
+    await closeRemoteSession({ quiet: true });
+    if (currentSessionId) {
+      showMessage("Could not close the previous remote session. Close it before opening another.");
+      return;
+    }
+  }
 
   const [width, height] = viewportSelect.value.split("x").map(Number);
   setBusy(true);
@@ -79,7 +90,16 @@ form.addEventListener("submit", async (event) => {
     });
     const data = await response.json();
 
-    if (!response.ok) throw new Error(data.error || "Could not start the remote browser.");
+    if (!response.ok) {
+      const retrySeconds = Number(data.retryAfter);
+      if (response.status === 429 && Number.isFinite(retrySeconds) && retrySeconds > 0) {
+        const hours = Math.floor(retrySeconds / 3600);
+        const minutes = Math.ceil((retrySeconds % 3600) / 60);
+        const wait = hours ? `${hours}h ${minutes}m` : `${minutes}m`;
+        throw new Error(`Cloudflare Browser Run rate limit reached. Retry-after: about ${wait}. Session cleanup prevents future waste, but cannot reset an exhausted quota.`);
+      }
+      throw new Error(data.error || "Could not start the remote browser.");
+    }
 
     currentSessionId = data.sessionId;
     sessionDetail.textContent = `${data.viewport.width} × ${data.viewport.height} · Remote browser ready.`;
@@ -94,7 +114,8 @@ form.addEventListener("submit", async (event) => {
 
 landscapeToggle.addEventListener("click", () => setLandscape(!landscape));
 
-viewerBack.addEventListener("click", hideViewer);
+// Leaving the viewer closes the remote session instead of merely hiding it.
+viewerBack.addEventListener("click", () => closeRemoteSession());
 
 viewerNewTab.addEventListener("click", () => {
   if (!currentLiveViewUrl) return;
@@ -102,48 +123,62 @@ viewerNewTab.addEventListener("click", () => {
 });
 
 browserFrame.addEventListener("load", () => {
-  viewerStatus.textContent = "Viewer frame loaded. If it looks blank, tap ↗ to open it separately."
+  viewerStatus.textContent = "Viewer frame loaded. If it looks blank, tap ↗ to open it separately.";
 });
 
-async function closeRemoteSession() {
+async function closeRemoteSession({ quiet = false, fromPageHide = false } = {}) {
+  if (isClosing) return;
   if (!currentSessionId) {
     hideViewer();
+    activeSession.hidden = true;
     return;
   }
 
-  closeButton.disabled = true;
-  closeButton.textContent = "Closing…";
-  viewerStatus.textContent = "Closing remote browser…";
+  const sessionId = currentSessionId;
+  isClosing = true;
+  if (!fromPageHide) {
+    closeButton.disabled = true;
+    closeButton.textContent = "Closing…";
+    viewerStatus.textContent = "Closing remote browser…";
+  }
 
   try {
-    const response = await fetch(`/api/session/${encodeURIComponent(currentSessionId)}`, {
+    const response = await fetch(`/api/session/${encodeURIComponent(sessionId)}`, {
       method: "DELETE",
+      keepalive: fromPageHide,
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Could not close the remote session.");
 
-    currentSessionId = null;
-    currentLiveViewUrl = null;
-    browserFrame.removeAttribute("src");
+    if (currentSessionId === sessionId) {
+      currentSessionId = null;
+      currentLiveViewUrl = null;
+    }
     activeSession.hidden = true;
     hideViewer();
-    showMessage("Remote browser session closed.");
+    if (!quiet && !fromPageHide) showMessage("Remote browser session closed.");
   } catch (error) {
-    showMessage(error instanceof Error ? error.message : "Could not close the session.");
-    viewerStatus.textContent = "Could not close the remote browser. Please try again.";
+    if (!quiet && !fromPageHide) {
+      showMessage(error instanceof Error ? error.message : "Could not close the session.");
+      viewerStatus.textContent = "Could not close the remote browser. Please try again.";
+    }
   } finally {
-    closeButton.disabled = false;
-    closeButton.textContent = "Close remote session";
+    isClosing = false;
+    if (!fromPageHide) {
+      closeButton.disabled = false;
+      closeButton.textContent = "Close remote session";
+    }
   }
 }
 
-closeButton.addEventListener("click", closeRemoteSession);
+closeButton.addEventListener("click", () => closeRemoteSession());
 
 window.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !viewer.hidden) hideViewer();
+  if (event.key === "Escape" && !viewer.hidden) closeRemoteSession();
 });
 
 window.addEventListener("pagehide", () => {
-  // The server-side session has its own ten-minute keep-alive. Explicitly close
-  // it with the in-viewer control when you are done.
+  // Ask the server to release the browser as this page is dismissed.
+  // The 2-minute server-side keep-alive is the fallback if the request is lost.
+  if (currentSessionId && !isClosing) closeRemoteSession({ quiet: true, fromPageHide: true });
 });
