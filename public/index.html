@@ -47,7 +47,7 @@
       <div id="message" class="message" role="status" aria-live="polite" hidden></div>
 
       <section id="active-session" class="active-session" hidden>
-        <div class="session-indicator"><span class="status-dot"></span><div><strong>Browser opened</strong><p id="session-detail">Your desktop view is in a new tab.</p></div></div>
+        <div class="session-indicator"><span class="status-dot"></span><div><strong>Browser opened</strong><p id="session-detail">Your remote browser is ready.</p></div></div>
         <button id="close-session" class="secondary-button" type="button">Close remote session</button>
       </section>
     </section>
@@ -69,5 +69,21 @@
 
     <footer><span>Portify <span class="footer-dot">·</span> Open source, built for the community.</span><a href="https://github.com/aristhegf/portify" target="_blank" rel="noreferrer">View source ↗</a></footer>
   </main>
+
+  <section id="browser-viewer" class="browser-viewer" aria-label="Remote desktop browser" hidden>
+    <header class="viewer-toolbar">
+      <button id="viewer-back" class="viewer-icon-button" type="button" aria-label="Close viewer and return to Portify">←</button>
+      <div class="viewer-title"><strong>Portify</strong><span id="viewer-address">Connecting to website…</span></div>
+      <button id="landscape-toggle" class="viewer-action" type="button" aria-pressed="false"><span aria-hidden="true">↻</span> Landscape</button>
+      <button id="viewer-new-tab" class="viewer-icon-button" type="button" aria-label="Open remote browser in a new tab">↗</button>
+    </header>
+    <div id="viewer-stage" class="viewer-stage">
+      <iframe id="browser-frame" title="Interactive remote desktop browser" allow="clipboard-read; clipboard-write; fullscreen" referrerpolicy="no-referrer"></iframe>
+    </div>
+    <div class="viewer-footer">
+      <span id="viewer-status" role="status">Connecting to remote browser…</span>
+      <span>Landscape rotates the viewer, not your phone.</span>
+    </div>
+  </section>
 </body>
 </html>
