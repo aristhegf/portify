@@ -131,7 +131,7 @@ async function createSession(request: Request, env: Env): Promise<Response> {
 
   try {
     const session = await env.BROWSER.acquire({
-      keepAlive: 600_000,
+      keepAlive: 120_000,
       targets: true,
     });
     sessionId = session.sessionId;
