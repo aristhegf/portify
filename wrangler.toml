@@ -1,0 +1,11 @@
+name = "portify"
+main = "src/index.ts"
+compatibility_date = "2026-10-12"
+compatibility_flags = ["nodejs_compat"]
+
+[browser]
+binding = "BROWSER"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
